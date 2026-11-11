@@ -2,6 +2,16 @@
 #import "FeatureManager.h"
 #import "MemoryPatcher.h"
 
+/// 穿透式窗口：只在命中自身子视图（按钮/面板）时拦截事件，空白区域让触摸穿透到下层游戏窗口。
+@interface PassthroughWindow : UIWindow
+@end
+@implementation PassthroughWindow
+- (UIView*)hitTest:(CGPoint)point withEvent:(UIEvent*)event {
+    UIView *hit = [super hitTest:point withEvent:event];
+    return (hit == self) ? nil : hit;
+}
+@end
+
 @interface FloatingMenuManager () <UITableViewDataSource, UITableViewDelegate>
 @property (nonatomic, strong) UIWindow *overlayWindow;
 @property (nonatomic, strong) UIButton *floatButton;
@@ -33,8 +43,8 @@
         }
     }
 
-    // 2) 创建 overlay 窗口，置于最顶层（高于游戏/Unity 的 UIWindow）
-    self.overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    // 2) 创建穿透式 overlay 窗口（空白不拦截触摸，游戏可正常操作）
+    self.overlayWindow = [[PassthroughWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     if (@available(iOS 13.0, *)) self.overlayWindow.windowScene = scene;
     self.overlayWindow.windowLevel = UIWindowLevelStatusBar + 100;
     self.overlayWindow.backgroundColor = [UIColor clearColor];
@@ -132,15 +142,16 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
         cell.backgroundColor = [UIColor clearColor];
         cell.textLabel.textColor = [UIColor whiteColor];
+        // UISwitch 仅在创建 cell 时建立并绑定一次，避免复用导致重复 addTarget
+        UISwitch *sw = [[UISwitch alloc] init];
+        [sw addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = sw;
     }
     Feature *f = [FeatureManager shared].features[indexPath.row];
     cell.textLabel.text = f.displayName;
-
-    UISwitch *sw = [[UISwitch alloc] init];
+    UISwitch *sw = (UISwitch*)cell.accessoryView;
     sw.on = f.enabled;
     sw.tag = indexPath.row;
-    [sw addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
-    cell.accessoryView = sw;
     return cell;
 }
 
@@ -148,9 +159,8 @@
     Feature *f = [FeatureManager shared].features[sw.tag];
     BOOL ok = [[FeatureManager shared] setEnabled:sw.on forFeature:f];
     if (!ok) {
-        // 写入失败（例如内存权限不足），回退开关状态
-        sw.on = !sw.on;
-        f.enabled = !sw.on;
+        // 写入失败（如代码段受硬件保护无法改写）：保持内存真实状态，不翻转 UI 误导用户
+        sw.on = f.enabled;
     }
 }
 
