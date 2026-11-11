@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Filter</key>
+    <dict>
+        <key>Bundles</key>
+        <array>
+            <!-- 改成游戏真实 bundle id；CF 手游通常是 com.tencent.tmgp.cf，用 Filza 打开游戏 Info.plist 的 CFBundleIdentifier 确认 -->
+            <string>com.tencent.tmgp.cf</string>
+        </array>
+    </dict>
+</dict>
+</plist>
