@@ -1,0 +1,9 @@
+Package: com.floatingmenu.demo
+Name: FloatingMenu
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: 游戏内悬浮窗模块（可拖动按钮 + 功能开关面板，演示）
+Maintainer: FloatingMenu
+Author: FloatingMenu
+Section: Tweaks
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.7100)
