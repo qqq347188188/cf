@@ -18,7 +18,7 @@ jobs:
           cd FloatingMenu
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
           xcrun clang \
-            -target arm64-apple-ios14.0 \
+            -target arm64e-apple-ios14.0 \
             -dynamiclib \
             -fobjc-arc \
             -isysroot "$SDK" \
@@ -38,6 +38,7 @@ jobs:
           rm -rf pkg && mkdir -p pkg/var/jb/Library/MobileSubstrate/DynamicLibraries pkg/DEBIAN
           cp FloatingMenu/FloatingMenu.dylib pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
           cp FloatingMenu/FloatingMenu.plist   pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.plist
+          chmod 0755 pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
           cat > pkg/DEBIAN/control <<'EOF'
           Package: com.example.floatingmenu
           Name: FloatingMenu
