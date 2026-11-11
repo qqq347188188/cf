@@ -1,4 +1,4 @@
-name: Build FloatingMenu deb
+name: Build FloatingMenu (dylib + deb)
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build dylib (arm64, iOS 14+)
+      - name: Build dylib (arm64e, iOS 14+)
         run: |
           cd FloatingMenu
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -29,16 +29,22 @@ jobs:
             -install_name @executable_path/Frameworks/FloatingMenu.dylib \
             -o FloatingMenu.dylib
 
+      - name: Upload dylib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloatingMenu.dylib
+          path: FloatingMenu/FloatingMenu.dylib
+
       - name: Install dpkg
         run: brew install dpkg
 
-      - name: Package rootless deb (installs to /var/jb)
+      - name: Package rootless deb (Sileo maps deb-internal / -> /var/jb)
         run: |
           set -e
-          rm -rf pkg && mkdir -p pkg/var/jb/Library/MobileSubstrate/DynamicLibraries pkg/DEBIAN
-          cp FloatingMenu/FloatingMenu.dylib pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
-          cp FloatingMenu/FloatingMenu.plist   pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.plist
-          chmod 0755 pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
+          rm -rf pkg && mkdir -p pkg/Library/MobileSubstrate/DynamicLibraries pkg/DEBIAN
+          cp FloatingMenu/FloatingMenu.dylib pkg/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
+          cp FloatingMenu/FloatingMenu.plist   pkg/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.plist
+          chmod 0755 pkg/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
           cat > pkg/DEBIAN/control <<'EOF'
           Package: com.example.floatingmenu
           Name: FloatingMenu
@@ -52,7 +58,7 @@ jobs:
           dpkg-deb -b pkg FloatingMenu.deb
           ls -la FloatingMenu.deb
 
-      - name: Upload artifact
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: FloatingMenu.deb
