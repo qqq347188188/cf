@@ -1,0 +1,7 @@
+# 大二进制 / 中间产物（无需入库，避免推送到 GitHub 时拖慢 Actions）
+*.bin
+*.dylib
+__pycache__/
+*.pyc
+
+# 仅保留源码与脚本：FloatingMenu/、.github/、inject_dylib.py
