@@ -1,4 +1,4 @@
-name: Build FloatingMenu dylib
+name: Build FloatingMenu deb
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest   # 提供 Xcode + iOS SDK，用于交叉编译 arm64 dylib
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +29,30 @@ jobs:
             -install_name @executable_path/Frameworks/FloatingMenu.dylib \
             -o FloatingMenu.dylib
 
+      - name: Install dpkg
+        run: brew install dpkg
+
+      - name: Package rootless deb (installs to /var/jb)
+        run: |
+          set -e
+          rm -rf pkg && mkdir -p pkg/var/jb/Library/MobileSubstrate/DynamicLibraries pkg/DEBIAN
+          cp FloatingMenu/FloatingMenu.dylib pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.dylib
+          cp FloatingMenu/FloatingMenu.plist   pkg/var/jb/Library/MobileSubstrate/DynamicLibraries/FloatingMenu.plist
+          cat > pkg/DEBIAN/control <<'EOF'
+          Package: com.example.floatingmenu
+          Name: FloatingMenu
+          Version: 1.0.0
+          Architecture: iphoneos-arm64
+          Description: CF in-game floating menu tweak (rootless, iOS 16.6)
+          Maintainer: you <you@example.com>
+          Depends: ellekit
+          Section: Tweaks
+          EOF
+          dpkg-deb -b pkg FloatingMenu.deb
+          ls -la FloatingMenu.deb
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FloatingMenu.dylib
-          path: FloatingMenu/FloatingMenu.dylib
+          name: FloatingMenu.deb
+          path: FloatingMenu.deb
