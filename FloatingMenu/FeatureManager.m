@@ -34,9 +34,11 @@
             NSNumber *v = saved[f.identifier];
             if (v) {
                 f.enabled = v.boolValue;
-                // 重新应用已开启的功能（确保进程内状态与持久化一致）
+                // 重新应用已开启的功能；若写入失败则标记关闭，避免 UI 与真实状态不符
                 if (f.enabled) {
-                    for (PatchEntry *p in f.patches) [MemoryPatcher applyPatch:p];
+                    for (PatchEntry *p in f.patches) {
+                        if (![MemoryPatcher applyPatch:p]) { f.enabled = NO; break; }
+                    }
                 }
             }
         }
@@ -47,10 +49,12 @@
     BOOL ok = YES;
     for (PatchEntry *p in feature.patches) {
         BOOL r = enabled ? [MemoryPatcher applyPatch:p] : [MemoryPatcher restorePatch:p];
-        if (!r) ok = NO;
+        if (!r) { ok = NO; break; }   // 任一补丁写入失败即整体失败，避免半成品
     }
-    feature.enabled = enabled;
-    [self saveState];
+    if (ok) {
+        feature.enabled = enabled;
+        [self saveState];
+    }
     return ok;
 }
 
