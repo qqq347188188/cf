@@ -1,0 +1,36 @@
+name: Build FloatingMenu dylib
+
+on:
+  push:
+    paths:
+      - 'FloatingMenu/**'
+      - '.github/workflows/build-dylib.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest   # 提供 Xcode + iOS SDK，用于交叉编译 arm64 dylib
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dylib (arm64, iOS 14+)
+        run: |
+          cd FloatingMenu
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          xcrun clang \
+            -target arm64-apple-ios14.0 \
+            -dynamiclib \
+            -fobjc-arc \
+            -isysroot "$SDK" \
+            -I. \
+            entry.m FloatingMenu.m FeatureManager.m Features.m MemoryPatcher.m \
+            -framework Foundation \
+            -framework UIKit \
+            -install_name @executable_path/Frameworks/FloatingMenu.dylib \
+            -o FloatingMenu.dylib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloatingMenu.dylib
+          path: FloatingMenu/FloatingMenu.dylib
