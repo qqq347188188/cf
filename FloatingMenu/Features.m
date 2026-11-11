@@ -15,7 +15,7 @@ static NSData *hexData(NSString *s) {
 
 // 构造一条补丁；module 默认 "cf"（游戏主二进制名）
 #define P(vm, orig, pat) \
-    [PatchEntry entryWithModule:@"cf" vmaddr:(vm) original:hexData(@orig) patched:hexData(@pat)]
+    [PatchEntry entryWithModule:@"cf" vmaddr:(vm) original:hexData(orig) patched:hexData(pat)]
 
 @implementation Features
 
