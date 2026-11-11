@@ -54,18 +54,17 @@
 + (BOOL)writeBytes:(const void*)bytes length:(size_t)len atActualAddress:(uintptr_t)addr {
     // 按 16KB 页对齐
     vm_address_t page = (vm_address_t)(addr & PAGE_MASK_16K);
-    vm_prot_t oldProt;
-    vm_prot_t oldMax;
     kern_return_t kr = vm_protect(mach_task_self(), page, 0x4000, FALSE,
                                   VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
     if (kr != KERN_SUCCESS) {
-        // 某些环境需要先取回原权限再尝试；此处直接失败返回。
+        // 代码段受硬件保护（APRR/KTRR，无越狱设备常见）时内核会拒绝，
+        // 此时无法运行时改写 __TEXT，需要越狱环境或改用固化补丁方案。
+        NSLog(@"[MemoryPatcher] vm_protect failed kr=0x%x addr=%p", kr, (void*)addr);
         return NO;
     }
     memcpy((void*)addr, bytes, len);
     // 还原为可执行只读
     vm_protect(mach_task_self(), page, 0x4000, FALSE, VM_PROT_READ | VM_PROT_EXECUTE);
-    (void)oldProt; (void)oldMax;
     return YES;
 }
 
